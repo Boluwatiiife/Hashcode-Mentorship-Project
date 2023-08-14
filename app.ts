@@ -26,12 +26,13 @@
 // HOST
 // PORT
 // http://127.0.0.1:3000
-import { searchGitHubUsers } from './src/client/github.client';
+import { GetGithubUserRepoLangs, searchGitHubUsers } from './src/client/github.client';
+import { GetUserProfile } from './src/client/github.client';
 
 require('dotenv').config();
-import express from 'express';
-import bodyParser from 'body-parser';
-import mongoose from 'mongoose';
+import * as express from 'express'
+import * as bodyParser from 'body-parser';
+import mongoose from "mongoose";
 import { TodoModel } from './src/models/todo';
 import { firstDocument, secondDocument } from './src/sample.data';
 
@@ -135,6 +136,8 @@ app.delete('/todos/:todoId', async (req: express.Request, res: express.Response)
   }
 });
 
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
 app.get('/github/users', async (req: express.Request, res: express.Response) => {
   // Search for GitHub users
   const { searchTerm, page, perPage, sort, order } = req.query;
@@ -146,29 +149,68 @@ app.get('/github/users', async (req: express.Request, res: express.Response) => 
       sort: sort as string,
       order: order as ('asc' | 'desc'),
     });
+
     // only return the items login url and avatar_url
-    const refinedItems = result.items.map((item: any) => {
+    /*const refinedItems = result.items.map((item: any) => {
       return {
         login: item.login,
         avatar_url: item.avatar_url,
         url: item.url,
       };
-    });
+    });*/
     return res.status(200).send({
       total_count: result.total_count,
       incomplete_results: result.incomplete_results,
-      items: refinedItems,
+      items: result.items/* refinedItems */,
     });
 
   } catch (e: any) {
     console.log(e.response);
-    return res.status(500).send({ message: 'An error occurred' });
+    return res.status(500).send({ message: 'An error occurred',error:e});
+  }
+});
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+// 2. Create a new endpoint that receives a username and returns the user's profile information.
+app.get('/github/userprofile',async(req:express.Request,res:express.Response)=>{
+  // get user profile.
+  const {username}=req.query;
+  try{
+      const result = await GetUserProfile({
+          username: username as string
+      });
+      /*const answerr = result.items.map((xx : any)=>{
+        return xx;
+      });
+      return res.status(200).send({answerr});*/
+      return res.status(200).send(result);
+  }catch (e:any){
+      console.log(e.response);
+      return res.status(500).send({Yo : 'An error occurred', error:e});
+  }
+})
+
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// 3. Create a new endpoint that receives a GitHub repository URL and then returns the programming languages used in that repository.
+// [https://docs.github.com/en/rest/repos/repos?apiVersion=2022-11-28#list-repository-languages]
+app.get('/repo/lang', async (req:express.Request,res:express.Response)=>{
+  const {owner,repo}=req.query;
+  try{
+    const result = await GetGithubUserRepoLangs({
+      owner: owner as string,
+      repo: repo as string,
+    });
+    return res.status(200).send(/*languages:*/result)
+  }catch(e:any){
+    console.log(e.response);
+    return res.status(500).send({idan: 'An error occurred',error:e});
   }
 });
 
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 app.listen(5672, async () => {
   console.log('Server is running at http://localhost:5672');
-  await mongoose.connect('mongodb://127.0.0.1/hmp-todo-app');
+  await mongoose.connect('mongodb://127.0.0.1/first-project');
   console.log('Connected to MongoDB');
 });
 

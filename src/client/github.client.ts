@@ -1,7 +1,11 @@
 // Lazy Loading
-import dotenv from 'dotenv';
+import * as dotenv from 'dotenv';
 import fetch from 'node-fetch';
 import { GitHubGetUsersResponse } from '../interfaces/github.response';
+//import { GitHubGetUserProfileResponse } from '../interfaces/github.response';
+import { GitHubUserRepoLang } from '../interfaces/github.response';
+import { userProfile } from '../interfaces/github.response';
+import { response } from 'express';
 
 dotenv.config();
 
@@ -32,13 +36,57 @@ export const searchGitHubUsers = async (request: SearchGitHubUsersRequest): Prom
   const response = await fetch(url, {
     headers: {
       'Accept': 'application/vnd.github.v3+json',
-      'Authorization': `Bearer ${process.env.GITHUB_API_TOKEN}`
+      'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`
     },
   });
   // console.log(data);
   return await response.json();
 }
+//console.log(response);
 
 // searchGitHubUsers({
 //   searchTerm: 'bolu',
 // }).then();
+
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// Question 3.
+export type GitHubUserRepoLanguageRequest = {
+  owner : string;
+  repo : string;
+}
+
+export const GetGithubUserRepoLangs = async (request:GitHubUserRepoLanguageRequest):Promise<GitHubUserRepoLang> =>{
+  const {owner,repo}=request;
+  let url = `https://api.github.com/repos/${owner}/${repo}/languages`;
+
+  const response = await fetch(url, {
+      headers:{
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`
+      },
+  });
+  return await response.json();
+}
+
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+//Question 2 trial
+export type GetUserProfileRequest={
+  username:string;
+}
+
+export const GetUserProfile=async(request: GetUserProfileRequest):Promise<userProfile>=>{
+  const {username} = request;
+  let url = `https://api.github.com/users/${username}`;
+  //let url = `https://api.github.com/search/users?q=${theeUser}`;
+  const response = await fetch(url,{
+      headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`
+      },
+  });
+  return await response.json();
+};
+
+
+
+
